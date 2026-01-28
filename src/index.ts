@@ -1,28 +1,35 @@
-import express, { Application, Request, Response } from 'express';
-import bodyParser from 'body-parser';
-import { connectDatabase } from './database/mongodb';
-import { PORT } from './config';
-import authRoutes from "./routes/auth.route";
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import authRouter from "./routes/auth.route";
 
-const app: Application = express();
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// ...existing code...
 
-app.use('/api/auth', authRoutes);
-app.get('/', (req: Request, res: Response) => {
-    return res.status(200).json({ success: "true", message: "Welcome to the API" });
+dotenv.config();
+
+const app = express();
+
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true,
+}));
+app.use(express.json());
+
+app.get("/api/health", (req, res) => {
+  res.json({ status: "Backend is running 🚀" });
 });
 
-async function startServer() {
-    await connectDatabase();
+app.use("/api/auth", authRouter);
 
-    app.listen(
-        PORT,
-        () => {
-            console.log(`Server: http://localhost:${PORT}`);
-        }
-    );
-}
-
-startServer();
+mongoose.connect(process.env.MONGODB_URI as string)
+  .then(() => {
+    console.log("✅ MongoDB connected");
+    app.listen(process.env.PORT || 5050, () => {
+      console.log(`🚀 Server running on http://localhost:${process.env.PORT || 5050}`);
+    });
+  })
+  .catch(err => {
+    console.error("❌ MongoDB connection error:", err);
+  });

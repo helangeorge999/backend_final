@@ -1,53 +1,59 @@
-import { CreateUserDTO, LoginUserDTO } from "../dtos/user.dto";
-import { UserRepository } from "../repositories/user.repository";
-import  bcryptjs from "bcryptjs"
-import { HttpError } from "../errors/http-error";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../config";
-
-let userRepository = new UserRepository();
+import bcrypt from "bcryptjs";
+import User from "../models/user.model";
 
 export class UserService {
-    async createUser(data: CreateUserDTO){
-        // business logic before creating user
-        const emailCheck = await userRepository.getUserByEmail(data.email);
-        if(emailCheck){
-            throw new HttpError(403, "Email already in use");
-        }
-        const usernameCheck = await userRepository.getUserByUsername(data.username);
-        if(usernameCheck){
-            throw new HttpError(403, "Username already in use");
-        }
-        // hash password
-        const hashedPassword = await bcryptjs.hash(data.password, 10); // 10 - complexity
-        data.password = hashedPassword;
 
-        // create user
-        const newUser = await userRepository.createUser(data);
-        return newUser;
+  async createUser(data: any) {
+    const existingEmail = await User.findOne({ email: data.email });
+    if (existingEmail) {
+      throw new Error("Email already registered");
     }
 
-    async loginUser(data: LoginUserDTO){
-        const user =  await userRepository.getUserByEmail(data.email);
-        if(!user){
-            throw new HttpError(404, "User not found");
-        }
-        // compare password
-        const validPassword = await bcryptjs.compare(data.password, user.password);
-        // plaintext, hashed
-        if(!validPassword){
-            throw new HttpError(401, "Invalid credentials");
-        }
-        // generate jwt
-        const payload = { // user identifier
-            id: user._id,
-            email: user.email,
-            username: user.username,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            role: user.role
-        }
-        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' }); // 30 days
-        return { token, user }
+    // 🔹 Generate username automatically
+    const baseUsername = data.email.split("@")[0];
+    let username = baseUsername;
+    let counter = 1;
+
+    while (await User.findOne({ username })) {
+      username = `${baseUsername}${counter}`;
+      counter++;
     }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const user = await User.create({
+      ...data,
+      username,
+      password: hashedPassword,
+    });
+
+    return {
+      id: user._id,
+      email: user.email,
+      username: user.username,
+    };
+  }
+
+  async loginUser(data: { email: string; password: string }) {
+    const { email, password } = data;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new Error("Invalid email or password");
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error("Invalid email or password");
+    }
+
+    return {
+      message: "Login successful",
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+      },
+    };
+  }
 }
