@@ -1,43 +1,24 @@
 import multer from "multer";
-import uuid from "uuid";
+import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
-import { Request } from "express";
-import { HttpError } from "../errors/http-error";
 
-// Ensure the uploads directory exists
-// __dirname - current directory of this file
-const uploadDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const uploadDir = path.join(__dirname, "../../uploads");
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadDir); // set upload directory
-    },
-    filename: function (req: Request, file, cb) {
-        const ext = path.extname(file.originalname); // get file extension
-        const filename = `${uuid.v4()}${ext}`;
-        cb(null, filename); // set unique file name
-    }
+  destination: (_req, _file, cb) => cb(null, uploadDir),
+  filename: (_req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 });
-const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    // Accept images only
-    if (!file.mimetype.startsWith('image/')) {
-        return cb(new HttpError(400, 'Only image files are allowed!'));
-    }
+
+export const upload = multer({
+  storage,
+  fileFilter: (_req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) return cb(new Error("Only images allowed"));
     cb(null, true);
-}
-
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5 MB limit
+  },
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
-
-export const uploads = {
-    single: (fieldName: string) => upload.single(fieldName),
-    array: (fieldName: string, maxCount: number) => upload.array(fieldName, maxCount),
-    fields: (fieldsArray: { name: string; maxCount?: number }[]) => upload.fields(fieldsArray)
-};

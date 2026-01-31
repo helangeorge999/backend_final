@@ -1,59 +1,52 @@
 import bcrypt from "bcryptjs";
-import User from "../models/user.model";
+import { UserRepository } from "../repositories/user.repository";
 
 export class UserService {
+  private repo = new UserRepository();
 
   async createUser(data: any) {
-    const existingEmail = await User.findOne({ email: data.email });
-    if (existingEmail) {
-      throw new Error("Email already registered");
-    }
-
-    // 🔹 Generate username automatically
-    const baseUsername = data.email.split("@")[0];
-    let username = baseUsername;
-    let counter = 1;
-
-    while (await User.findOne({ username })) {
-      username = `${baseUsername}${counter}`;
-      counter++;
-    }
+    const existing = await this.repo.getUserByEmail(data.email);
+    if (existing) throw new Error("Email already registered");
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    const user = await User.create({
-      ...data,
-      username,
+    const user = await this.repo.createUser({
+      name: data.name,
+      email: data.email,
+      dob: data.dob,
+      gender: data.gender,
+      phone: data.phone,
       password: hashedPassword,
     });
 
     return {
       id: user._id,
+      name: user.name,
       email: user.email,
-      username: user.username,
     };
   }
 
   async loginUser(data: { email: string; password: string }) {
-    const { email, password } = data;
+    const user = await this.repo.getUserByEmail(data.email);
+    if (!user) throw new Error("Invalid email or password");
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      throw new Error("Invalid email or password");
-    }
+    const isMatch = await bcrypt.compare(data.password, user.password);
+    if (!isMatch) throw new Error("Invalid email or password");
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      throw new Error("Invalid email or password");
-    }
+    return user;
+  }
 
-    return {
-      message: "Login successful",
-      user: {
-        id: user._id,
-        email: user.email,
-        username: user.username,
-      },
-    };
+  async getUserByEmail(email: string) {
+    return this.repo.getUserByEmail(email);
+  }
+
+  async getUserProfile(userId: string) {
+    const user = await this.repo.getUserById(userId);
+    if (!user) throw new Error("User not found");
+    return user;
+  }
+
+  async uploadPhoto(userId: string, photoUrl: string) {
+    return this.repo.updateUserPhoto(userId, photoUrl);
   }
 }

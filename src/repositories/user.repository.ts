@@ -9,7 +9,15 @@ export class UserRepository {
     return User.findOne({ email });
   }
 
+  async getUserById(id: string) {
+    return User.findById(id);
+  }
+
+  async updateUserPhoto(id: string, photoUrl: string) {
+    return User.findByIdAndUpdate(id, { photoUrl }, { new: true });
+  }
+
   async getUserByUsername(username: string) {
-    return User.findOne({ username });
+    return User.findOne({ username }); // optional if you want username logic
   }
 }

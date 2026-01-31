@@ -1,35 +1,25 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import mongoose from "mongoose";
+import dotenv from "dotenv";
 import authRouter from "./routes/auth.route";
-
-
-// ...existing code...
+import userRouter from "./routes/user.route";
 
 dotenv.config();
 
 const app = express();
-
-app.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true,
-}));
+app.use(cors());
 app.use(express.json());
-
-app.get("/api/health", (req, res) => {
-  res.json({ status: "Backend is running 🚀" });
-});
+app.use("/uploads", express.static("uploads"));
 
 app.use("/api/auth", authRouter);
+app.use("/api/user", userRouter);
 
-mongoose.connect(process.env.MONGODB_URI as string)
+mongoose.connect(process.env.MONGODB_URI!)
   .then(() => {
     console.log("✅ MongoDB connected");
     app.listen(process.env.PORT || 5050, () => {
-      console.log(`🚀 Server running on http://localhost:${process.env.PORT || 5050}`);
+      console.log(`🚀 Server running at http://localhost:${process.env.PORT || 5050}`);
     });
   })
-  .catch(err => {
-    console.error("❌ MongoDB connection error:", err);
-  });
+  .catch(err => console.error("❌ MongoDB connection error:", err));
