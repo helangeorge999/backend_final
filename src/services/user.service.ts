@@ -43,10 +43,27 @@ export class UserService {
   async getUserProfile(userId: string) {
     const user = await this.repo.getUserById(userId);
     if (!user) throw new Error("User not found");
-    return user;
+
+    // Always return full photo URL
+    const hostUrl = process.env.HOST_URL || "";
+    const photoUrl = user.photoUrl ? `${hostUrl}${user.photoUrl.replace(hostUrl, "")}` : undefined;
+
+    return {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      gender: user.gender,
+      dob: user.dob,
+      photoUrl,
+    };
   }
 
   async uploadPhoto(userId: string, photoUrl: string) {
     return this.repo.updateUserPhoto(userId, photoUrl);
+  }
+
+  async updateProfile(userId: string, data: Partial<any>) {
+    return this.repo.updateUserProfile(userId, data);
   }
 }

@@ -18,20 +18,12 @@ export class AuthController {
       const { email, password } = req.body;
 
       const user = await service.loginUser({ email, password });
-      const fullUser = await service.getUserByEmail(email);
+      const fullUser = await service.getUserProfile(user._id.toString());
 
       res.status(200).json({
         success: true,
         message: "Login successful",
-        user: {
-          id: fullUser?._id,
-          name: fullUser?.name,
-          email: fullUser?.email,
-          phone: fullUser?.phone,
-          gender: fullUser?.gender,
-          dob: fullUser?.dob,
-          photoUrl: fullUser?.photoUrl,
-        },
+        user: fullUser,
       });
     } catch (err: any) {
       res.status(400).json({ success: false, message: err.message });

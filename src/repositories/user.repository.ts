@@ -17,7 +17,7 @@ export class UserRepository {
     return User.findByIdAndUpdate(id, { photoUrl }, { new: true });
   }
 
-  async getUserByUsername(username: string) {
-    return User.findOne({ username }); // optional if you want username logic
+  async updateUserProfile(id: string, data: Partial<IUser>) {
+    return User.findByIdAndUpdate(id, data, { new: true });
   }
 }

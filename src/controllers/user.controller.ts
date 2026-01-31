@@ -7,6 +7,8 @@ export class UserController {
   async getProfile(req: Request, res: Response) {
     try {
       const { userId } = req.query;
+      if (!userId) throw new Error("userId is required");
+
       const data = await service.getUserProfile(userId as string);
       res.json({ success: true, data });
     } catch (err: any) {
@@ -22,10 +24,11 @@ export class UserController {
       if (!file) throw new Error("No file uploaded");
       if (!userId) throw new Error("userId is required");
 
-      const photoUrl = `http://localhost:5050/uploads/${file.filename}`;
-      await service.uploadPhoto(userId, photoUrl);
+      const photoUrl = `/uploads/profile/${file.filename}`;
+      const hostUrl = process.env.HOST_URL || "http://localhost:3000";
+      await service.uploadPhoto(userId, `${hostUrl}${photoUrl}`);
 
-      res.json({ success: true, url: photoUrl });
+      res.json({ success: true, url: `${hostUrl}${photoUrl}` });
     } catch (err: any) {
       res.status(400).json({ success: false, message: err.message });
     }
