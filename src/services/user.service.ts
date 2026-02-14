@@ -20,7 +20,6 @@ export class UserService {
     if (existing) throw new Error("Email already registered");
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
-
     const user = await this.repo.createUser({
       name:     data.name,
       email:    data.email,
@@ -30,11 +29,7 @@ export class UserService {
       password: hashedPassword,
     });
 
-    return {
-      id:    user._id,
-      name:  user.name,
-      email: user.email,
-    };
+    return { id: user._id, name: user.name, email: user.email };
   }
 
   async loginUser(data: { email: string; password: string }) {

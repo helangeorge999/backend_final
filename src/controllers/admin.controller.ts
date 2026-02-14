@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
 import { AdminService } from "../services/admin.service";
 
-const service = new AdminService();
-
 export class AdminController {
+  private service = new AdminService();
+
   async getAllUsers(_req: Request, res: Response): Promise<void> {
     try {
-      const users = await service.getAllUsers();
+      const users = await this.service.getAllUsers();
       res.json({ success: true, data: users });
     } catch (err: any) {
       res.status(500).json({ success: false, message: err.message });
@@ -15,7 +15,7 @@ export class AdminController {
 
   async updateUser(req: Request, res: Response): Promise<void> {
     try {
-      const updated = await service.updateUser(req.params.id, req.body);
+      const updated = await this.service.updateUser(req.params.id, req.body);
       res.json({ success: true, data: updated });
     } catch (err: any) {
       res.status(400).json({ success: false, message: err.message });
@@ -24,7 +24,7 @@ export class AdminController {
 
   async deleteUser(req: Request, res: Response): Promise<void> {
     try {
-      await service.deleteUser(req.params.id);
+      await this.service.deleteUser(req.params.id);
       res.json({ success: true, message: "User deleted" });
     } catch (err: any) {
       res.status(400).json({ success: false, message: err.message });

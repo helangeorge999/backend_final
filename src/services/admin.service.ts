@@ -13,18 +13,13 @@ export class AdminService {
     if (existing) throw new Error("Admin email already registered");
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
-
     const admin = await this.repo.createAdmin({
       name:     data.name,
       email:    data.email,
       password: hashedPassword,
     });
 
-    return {
-      id:    admin._id,
-      name:  admin.name,
-      email: admin.email,
-    };
+    return { id: admin._id, name: admin.name, email: admin.email };
   }
 
   async loginAdmin(data: { email: string; password: string }) {
@@ -42,26 +37,14 @@ export class AdminService {
 
     return {
       token,
-      admin: {
-        id:    admin._id,
-        name:  admin.name,
-        email: admin.email,
-        role:  "admin" as const,
-      },
+      admin: { id: admin._id, name: admin.name, email: admin.email, role: "admin" as const },
     };
   }
 
   async getAdminProfile(adminId: string) {
     const admin = await this.repo.getAdminById(adminId);
     if (!admin) throw new Error("Admin not found");
-
-    return {
-      id:       admin._id,
-      name:     admin.name,
-      email:    admin.email,
-      photoUrl: admin.photoUrl,
-      role:     "admin" as const,
-    };
+    return { id: admin._id, name: admin.name, email: admin.email, photoUrl: admin.photoUrl, role: "admin" as const };
   }
 
   async getAllUsers() {
