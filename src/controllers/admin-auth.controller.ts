@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
-import { UserService } from "../services/user.service.js";
+import { AdminService } from "../services/admin.service";
 
-const service = new UserService();
+const service = new AdminService();
 
-export class AuthController {
+export class AdminAuthController {
   async register(req: Request, res: Response): Promise<void> {
     try {
-      const user = await service.createUser(req.body);
-      res.status(201).json({ success: true, message: "Signup successful", user });
+      const admin = await service.registerAdmin(req.body);
+      res.status(201).json({ success: true, message: "Admin created", admin });
     } catch (err: any) {
       res.status(400).json({ success: false, message: err.message });
     }
@@ -16,14 +16,12 @@ export class AuthController {
   async login(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
-      const { user, token } = await service.loginUser({ email, password });
-      const fullUser = await service.getUserProfile(user._id.toString());
-
+      const { token, admin } = await service.loginAdmin({ email, password });
       res.status(200).json({
         success: true,
-        message: "Login successful",
+        message: "Admin login successful",
         token,
-        user: fullUser,
+        user: admin,
       });
     } catch (err: any) {
       res.status(400).json({ success: false, message: err.message });

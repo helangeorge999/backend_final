@@ -2,12 +2,12 @@ import { z } from "zod";
 
 export const CreateUserDTO = z
   .object({
-    name: z.string().min(2),
-    email: z.string().email(),
-    dob: z.string(),
-    gender: z.enum(["male", "female"]),
-    phone: z.string(),
-    password: z.string().min(6),
+    name:            z.string().min(2, "Name must be at least 2 characters"),
+    email:           z.string().email("Invalid email"),
+    dob:             z.string().min(1, "Date of birth is required"),
+    gender:          z.enum(["male", "female"]),
+    phone:           z.string().min(7, "Invalid phone number"),
+    password:        z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(6),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -18,6 +18,8 @@ export const CreateUserDTO = z
 export type CreateUserDTO = z.infer<typeof CreateUserDTO>;
 
 export const LoginUserDTO = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
+  email:    z.string().email("Invalid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
+
+export type LoginUserDTO = z.infer<typeof LoginUserDTO>;

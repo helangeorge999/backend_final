@@ -4,8 +4,7 @@ import { AdminService } from "../services/admin.service";
 const service = new AdminService();
 
 export class AdminController {
-  // GET /api/admin/users
-  async getAllUsers(req: Request, res: Response) {
+  async getAllUsers(_req: Request, res: Response): Promise<void> {
     try {
       const users = await service.getAllUsers();
       res.json({ success: true, data: users });
@@ -14,8 +13,7 @@ export class AdminController {
     }
   }
 
-  // PATCH /api/admin/users/:id
-  async updateUser(req: Request, res: Response) {
+  async updateUser(req: Request, res: Response): Promise<void> {
     try {
       const updated = await service.updateUser(req.params.id, req.body);
       res.json({ success: true, data: updated });
@@ -24,8 +22,7 @@ export class AdminController {
     }
   }
 
-  // DELETE /api/admin/users/:id
-  async deleteUser(req: Request, res: Response) {
+  async deleteUser(req: Request, res: Response): Promise<void> {
     try {
       await service.deleteUser(req.params.id);
       res.json({ success: true, message: "User deleted" });

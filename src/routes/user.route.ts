@@ -1,24 +1,13 @@
-import express from "express";
-import multer from "multer";
-import path from "path";
+import { Router } from "express";
 import { UserController } from "../controllers/user.controller";
+import { authenticate }   from "../middleware/auth.middleware";
+import { upload }         from "../middleware/upload.middleware";
 
-const router = express.Router();
-const ctrl = new UserController();
+const router = Router();
+const ctrl   = new UserController();
 
-// Upload folder
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/profile");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({ storage });
-
-router.get("/profile", ctrl.getProfile.bind(ctrl));
-router.post("/upload-photo", upload.single("file"), ctrl.uploadPhoto.bind(ctrl));
+router.get("/profile",     authenticate, ctrl.getProfile.bind(ctrl));
+router.patch("/profile",   authenticate, ctrl.updateProfile.bind(ctrl));
+router.post("/upload-photo", authenticate, upload.single("file"), ctrl.uploadPhoto.bind(ctrl));
 
 export default router;
