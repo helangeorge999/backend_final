@@ -1,5 +1,9 @@
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { UserRepository } from "../repositories/user.repository";
+
+const JWT_SECRET = process.env.JWT_SECRET || "default_secret";
+const JWT_EXPIRES_IN = "7d";
 
 export class UserService {
   private repo = new UserRepository();
@@ -33,7 +37,14 @@ export class UserService {
     const isMatch = await bcrypt.compare(data.password, user.password);
     if (!isMatch) throw new Error("Invalid email or password");
 
-    return user;
+    // JWT payload carries `role: "user"` to distinguish from admin tokens
+    const token = jwt.sign(
+      { userId: user._id.toString(), role: "user" },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    return { user, token };
   }
 
   async getUserByEmail(email: string) {
@@ -44,9 +55,10 @@ export class UserService {
     const user = await this.repo.getUserById(userId);
     if (!user) throw new Error("User not found");
 
-    // Always return full photo URL
     const hostUrl = process.env.HOST_URL || "";
-    const photoUrl = user.photoUrl ? `${hostUrl}${user.photoUrl.replace(hostUrl, "")}` : undefined;
+    const photoUrl = user.photoUrl
+      ? `${hostUrl}${user.photoUrl.replace(hostUrl, "")}`
+      : undefined;
 
     return {
       id: user._id,
@@ -56,6 +68,7 @@ export class UserService {
       gender: user.gender,
       dob: user.dob,
       photoUrl,
+      role: "user" as const,
     };
   }
 

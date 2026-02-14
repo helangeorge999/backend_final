@@ -8,16 +8,21 @@ export interface IUser extends Document {
   gender?: string;
   dob?: string;
   photoUrl?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-const UserSchema: Schema = new Schema({
-  name: { type: String },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  phone: { type: String },
-  gender: { type: String },
-  dob: { type: String },
-  photoUrl: { type: String },
-});
+const UserSchema: Schema = new Schema(
+  {
+    name:     { type: String },
+    email:    { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    phone:    { type: String },
+    gender:   { type: String },
+    dob:      { type: String },
+    photoUrl: { type: String },
+  },
+  { timestamps: true, collection: "users" }
+);
 
 export default mongoose.model<IUser>("User", UserSchema);

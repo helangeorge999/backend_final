@@ -17,13 +17,15 @@ export class AuthController {
     try {
       const { email, password } = req.body;
 
-      const user = await service.loginUser({ email, password });
+      // Now returns { user, token }
+      const { user, token } = await service.loginUser({ email, password });
       const fullUser = await service.getUserProfile(user._id.toString());
 
       res.status(200).json({
         success: true,
         message: "Login successful",
-        user: fullUser,
+        token,          // ← JWT token the frontend needs
+        user: fullUser, // includes role
       });
     } catch (err: any) {
       res.status(400).json({ success: false, message: err.message });

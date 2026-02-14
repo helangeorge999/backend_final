@@ -7,12 +7,12 @@ import { fileURLToPath } from "url";
 
 import authRouter from "./routes/auth.route";
 import userRouter from "./routes/user.route";
+import adminRouter from "./routes/admin.route";
 
 dotenv.config();
 
 const app = express();
 
-// Fix for __dirname in ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -24,6 +24,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
+app.use("/api/admin", adminRouter); // ← protected by JWT + admin role
 
 mongoose
   .connect(process.env.MONGODB_URI!)
