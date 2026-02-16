@@ -27,7 +27,18 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-connectDB().then(() => {
+connectDB().then(async () => {
+  // ── TEMPORARY: drop stale username index ─────────────────────────────────
+  // Remove these 8 lines after running the server once
+  try {
+    const mongoose = await import("mongoose");
+    await mongoose.default.connection.collection("users").dropIndex("username_1");
+    console.log("✅ Dropped stale username_1 index");
+  } catch (e: any) {
+    console.log("ℹ️  username_1 index not found (already dropped):", e.message);
+  }
+  // ── END TEMPORARY ─────────────────────────────────────────────────────────
+
   app.listen(PORT, () => {
     console.log(`🚀 Server running at http://localhost:${PORT}`);
   });
