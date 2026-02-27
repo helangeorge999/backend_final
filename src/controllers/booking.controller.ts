@@ -1,20 +1,30 @@
 import { Request, Response } from "express";
 import Booking from "../models/booking.model";
 import Bus from "../models/bus.model";
-import { HttpError } from "../utils/HttpError";
 
 export class BookingController {
   // Create booking
-  async create(req: Request, res: Response) {
+  async create(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
-      if (!userId) throw new HttpError(401, "Unauthorized");
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
 
       const { busId, from, to, travelDate, seats, totalAmount, passengerName, passengerPhone, passengerEmail } = req.body;
 
+      if (!busId) {
+        res.status(400).json({ success: false, message: "busId is required" });
+        return;
+      }
+
       // Verify bus exists
       const bus = await Bus.findById(busId);
-      if (!bus) throw new HttpError(404, "Bus not found");
+      if (!bus) {
+        res.status(404).json({ success: false, message: "Bus not found" });
+        return;
+      }
 
       // Generate booking ID
       const bookingId = `BK${Date.now()}`;
@@ -35,28 +45,31 @@ export class BookingController {
 
       res.status(201).json({ success: true, data: booking });
     } catch (error: any) {
-      throw new HttpError(error.statusCode || 400, error.message || "Failed to create booking");
+      res.status(400).json({ success: false, message: error.message || "Failed to create booking" });
     }
   }
 
   // Get user's bookings
-  async getUserBookings(req: Request, res: Response) {
+  async getUserBookings(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user?.id;
-      if (!userId) throw new HttpError(401, "Unauthorized");
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
 
       const bookings = await Booking.find({ userId })
         .populate("busId")
         .sort({ createdAt: -1 });
 
       res.json({ success: true, data: bookings });
-    } catch (error) {
-      throw new HttpError(500, "Failed to fetch bookings");
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message || "Failed to fetch bookings" });
     }
   }
 
   // Get all bookings (Admin only)
-  async getAll(req: Request, res: Response) {
+  async getAll(req: Request, res: Response): Promise<void> {
     try {
       const bookings = await Booking.find()
         .populate("userId", "name email")
@@ -64,23 +77,26 @@ export class BookingController {
         .sort({ createdAt: -1 });
 
       res.json({ success: true, data: bookings });
-    } catch (error) {
-      throw new HttpError(500, "Failed to fetch bookings");
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message || "Failed to fetch bookings" });
     }
   }
 
   // Cancel booking
-  async cancel(req: Request, res: Response) {
+  async cancel(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
 
       const booking = await Booking.findById(id);
-      if (!booking) throw new HttpError(404, "Booking not found");
+      if (!booking) {
+        res.status(404).json({ success: false, message: "Booking not found" });
+        return;
+      }
 
-      // Check if user owns this booking
       if (booking.userId.toString() !== userId) {
-        throw new HttpError(403, "Not authorized");
+        res.status(403).json({ success: false, message: "Not authorized" });
+        return;
       }
 
       booking.status = "cancelled";
@@ -88,7 +104,7 @@ export class BookingController {
 
       res.json({ success: true, data: booking });
     } catch (error: any) {
-      throw new HttpError(error.statusCode || 500, error.message);
+      res.status(500).json({ success: false, message: error.message || "Failed to cancel booking" });
     }
   }
 }

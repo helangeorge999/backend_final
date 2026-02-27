@@ -11,8 +11,8 @@ import { PORT } from "./config/env";
 import authRouter from "./routes/auth.route";
 import userRouter from "./routes/user.route";
 import adminRouter from "./routes/admin.route";
-import busRouter from "./routes/bus.route";           // ← ADD
-import bookingRouter from "./routes/booking.route";   // ← ADD
+import busRouter from "./routes/bus.route";           
+import bookingRouter from "./routes/booking.route";   
 
 const app = express();
 
@@ -24,15 +24,15 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/admin", adminRouter);
-app.use("/api/buses", busRouter);           // ← ADD
-app.use("/api/bookings", bookingRouter);    // ← ADD
+app.use("/api/buses", busRouter);           
+app.use("/api/bookings", bookingRouter);    
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
 connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Server running at http://0.0.0.0:${PORT}`);
   });
 });

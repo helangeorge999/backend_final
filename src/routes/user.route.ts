@@ -6,8 +6,9 @@ import { upload }         from "../middleware/upload.middleware";
 const router = Router();
 const ctrl   = new UserController();
 
-router.get("/profile",     authenticate, ctrl.getProfile.bind(ctrl));
-router.patch("/profile",   authenticate, ctrl.updateProfile.bind(ctrl));
-router.post("/upload-photo", authenticate, upload.single("file"), ctrl.uploadPhoto.bind(ctrl));
+router.get("/profile",          authenticate, ctrl.getProfile.bind(ctrl));
+router.patch("/profile",        authenticate, ctrl.updateProfile.bind(ctrl));
+router.post("/upload-photo",    authenticate, upload.single("file"), ctrl.uploadPhoto.bind(ctrl));
+router.post("/change-password", authenticate, ctrl.changePassword.bind(ctrl));
 
 export default router;

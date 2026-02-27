@@ -21,11 +21,11 @@ export class UserService {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
     const user = await this.repo.createUser({
-      name:     data.name,
-      email:    data.email,
-      dob:      data.dob,
-      gender:   data.gender,
-      phone:    data.phone,
+      name: data.name,
+      email: data.email,
+      dob: data.dob,
+      gender: data.gender,
+      phone: data.phone,
       password: hashedPassword,
     });
 
@@ -52,24 +52,47 @@ export class UserService {
     const user = await this.repo.getUserById(userId);
     if (!user) throw new Error("User not found");
 
-    const photoUrl = user.photoUrl
-      ? `${HOST_URL}${user.photoUrl.replace(HOST_URL, "")}`
-      : undefined;
+    // Handle both old (full URL) and new (relative path) formats in DB
+    let photoUrl: string | undefined;
+    if (user.photoUrl && user.photoUrl.trim() !== '') {
+      if (user.photoUrl.startsWith('http')) {
+        // Already a full URL — extract relative path first
+        const relativePath = user.photoUrl.replace(HOST_URL, '');
+        photoUrl = `${HOST_URL}${relativePath.startsWith('/') ? '' : '/'}${relativePath}`;
+      } else {
+        // Relative path — just prepend HOST_URL
+        photoUrl = `${HOST_URL}${user.photoUrl}`;
+      }
+    }
 
     return {
-      id:       user._id,
-      name:     user.name,
-      email:    user.email,
-      phone:    user.phone,
-      gender:   user.gender,
-      dob:      user.dob,
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      gender: user.gender,
+      dob: user.dob,
       photoUrl,
-      role:     "user" as const,
+      role: "user" as const,
     };
   }
 
   async uploadPhoto(userId: string, photoUrl: string) {
     return this.repo.updateUserPhoto(userId, photoUrl);
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.repo.getUserById(userId);
+    if (!user) throw new Error("User not found");
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) throw new Error("Current password is incorrect");
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
+    await user.save();
+
+    return { message: "Password changed successfully" };
   }
 
   async updateProfile(

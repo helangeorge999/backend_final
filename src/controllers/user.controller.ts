@@ -21,15 +21,45 @@ export class UserController {
 
   async uploadPhoto(req: Request, res: Response): Promise<void> {
     try {
-      const file       = req.file;
+      const file = req.file;
       const { userId } = req.body;
 
-      if (!file)   { res.status(400).json({ success: false, message: "No file uploaded" }); return; }
-      if (!userId) { res.status(400).json({ success: false, message: "userId is required" }); return; }
+      if (!file) {
+        res.status(400).json({ success: false, message: "No file uploaded" });
+        return;
+      }
+      if (!userId) {
+        res.status(400).json({ success: false, message: "userId is required" });
+        return;
+      }
 
+      // Store ONLY the relative path in DB
       const photoPath = `/uploads/profile/${file.filename}`;
-      await this.service.uploadPhoto(userId, `${HOST_URL}${photoPath}`);
+      await this.service.uploadPhoto(userId, photoPath);
+
+      // Return full URL in response
       res.json({ success: true, url: `${HOST_URL}${photoPath}` });
+    } catch (err: any) {
+      res.status(400).json({ success: false, message: err.message });
+    }
+  }
+
+  async changePassword(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
+
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        res.status(400).json({ success: false, message: "Both current and new passwords are required" });
+        return;
+      }
+
+      const result = await this.service.changePassword(userId, currentPassword, newPassword);
+      res.json({ success: true, message: result.message });
     } catch (err: any) {
       res.status(400).json({ success: false, message: err.message });
     }
