@@ -8,6 +8,9 @@ const JWT_EXPIRES_IN = "7d";
 export class UserService {
   private repo = new UserRepository();
 
+  // In-memory OTP store: email → { otp, expiresAt }
+  private otpStore = new Map<string, { otp: string; expiresAt: Date }>();
+
   async createUser(data: {
     name: string;
     email: string;
@@ -100,5 +103,33 @@ export class UserService {
     data: Partial<{ name: string; phone: string; gender: string; dob: string }>
   ) {
     return this.repo.updateUserProfile(userId, data);
+  }
+
+  async forgotPassword(email: string): Promise<{ otp: string }> {
+    const user = await this.repo.getUserByEmail(email);
+    if (!user) throw new Error("No account found with this email");
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    this.otpStore.set(email.toLowerCase(), { otp, expiresAt });
+    return { otp };
+  }
+
+  async resetPassword(email: string, otp: string, newPassword: string): Promise<void> {
+    const key = email.toLowerCase();
+    const stored = this.otpStore.get(key);
+    if (!stored) throw new Error("No reset request found. Please request a new code.");
+    if (new Date() > stored.expiresAt) {
+      this.otpStore.delete(key);
+      throw new Error("Reset code has expired. Please request a new one.");
+    }
+    if (stored.otp !== otp) throw new Error("Invalid reset code");
+
+    const user = await this.repo.getUserByEmail(email);
+    if (!user) throw new Error("User not found");
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    this.otpStore.delete(key);
   }
 }
